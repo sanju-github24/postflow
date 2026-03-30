@@ -17,6 +17,7 @@ const PLATFORMS = [
   { id: "facebook",  name: "Facebook",    logo: "/facebook-logo.png" },
   { id: "instagram", name: "Instagram",   logo: "/instagram-logo.png" },
   { id: "twitter",   name: "Twitter / X", logo: "/twitter-logo.png" },
+  { id: "linkedin",  name: "LinkedIn",    logo: "/linkedIn-logo.png" },
 ];
 
 // Per-platform media rules
@@ -49,6 +50,13 @@ const PLATFORM_MEDIA_RULES: Record<string, {
     videoMaxSec: 140,
     notes: ["Photos: JPG/PNG up to 5 MB", "GIF up to 15 MB", "Videos: MP4 up to 512 MB, max 140 sec"],
     unsupported: ["Audio (MP3/WAV)"],
+  },
+  linkedin: {
+    accept: ["image/jpeg", "image/png", "video/mp4"],
+    maxSizeMB: { image: 5, video: 200 },
+    videoMaxSec: 600,
+    notes: ["Photos: JPG/PNG up to 5 MB", "Videos: MP4 up to 200 MB, max 10 min"],
+    unsupported: ["Audio (MP3/WAV)", "GIF"],
   },
 };
 
@@ -220,13 +228,12 @@ export default function ComposePage() {
   const [scheduleError, setScheduleError] = React.useState("");
   const [connectedPlatforms, setConnectedPlatforms] = React.useState<string[]>([]);
 
-  // Initialize connected platforms and select them by default
   React.useEffect(() => {
     getPlatformStatus().then(res => {
       const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
       const connected = list.filter((p: any) => p.connected).map((p: any) => p.platform);
       setConnectedPlatforms(connected);
-      setSelectedPlatforms(connected); // Only auto-select what is connected
+      setSelectedPlatforms(connected);
     }).catch(() => {});
   }, []);
 
@@ -235,7 +242,6 @@ export default function ComposePage() {
 
   const handleTransform = async () => {
     if (!content.trim()) return;
-    // Only proceed if at least one selected platform is actually connected
     const validPlatforms = selectedPlatforms.filter(p => connectedPlatforms.includes(p));
     if (validPlatforms.length === 0) {
       setTransformError("Please select at least one connected account.");
@@ -347,18 +353,18 @@ export default function ComposePage() {
 
             <div className="space-y-3">
               <Label className="text-sm font-medium">Target Platforms</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {PLATFORMS.map(p => {
                   const isConnected = connectedPlatforms.includes(p.id);
                   const isSelected = selectedPlatforms.includes(p.id);
                   return (
-                    <button 
-                      key={p.id} 
+                    <button
+                      key={p.id}
                       disabled={!isConnected}
                       onClick={() => togglePlatform(p.id)}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all group",
-                        !isConnected ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" : 
+                        !isConnected ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" :
                         isSelected ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm" : "border-slate-200 bg-white hover:border-indigo-200"
                       )}>
                       <div className={cn(
@@ -384,8 +390,8 @@ export default function ComposePage() {
               </div>
             )}
 
-            <Button 
-              onClick={handleTransform} 
+            <Button
+              onClick={handleTransform}
               disabled={!content.trim() || selectedPlatforms.length === 0 || transforming}
               className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700 text-white h-12 shadow-md shadow-indigo-100"
             >
@@ -401,7 +407,7 @@ export default function ComposePage() {
         {/* ── STEP 2: Preview & Media ── */}
         {step === 2 && (
           <div className="space-y-4">
-             <div className="flex items-center justify-between px-1">
+            <div className="flex items-center justify-between px-1">
               <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Post Previews</h2>
               <Button variant="ghost" size="sm" onClick={handleRetransform} disabled={transforming} className="h-8 text-indigo-600 hover:bg-indigo-50">
                 <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", transforming && "animate-spin")} />
@@ -422,16 +428,21 @@ export default function ComposePage() {
                         {versions[platformId]?.length || 0}/280
                       </span>
                     )}
+                    {platformId === "linkedin" && (
+                      <span className={cn("ml-auto text-xs font-mono", (versions[platformId]?.length || 0) > 3000 ? "text-red-500 font-bold" : "text-slate-400")}>
+                        {versions[platformId]?.length || 0}/3000
+                      </span>
+                    )}
                   </div>
 
                   <div className="p-5 space-y-4">
-                    <textarea 
-                      rows={3} 
+                    <textarea
+                      rows={3}
                       value={versions[platformId] || ""}
                       onChange={e => setVersions(v => ({ ...v, [platformId]: e.target.value }))}
-                      className="w-full text-sm leading-relaxed focus:outline-none bg-transparent resize-none border-none p-0" 
+                      className="w-full text-sm leading-relaxed focus:outline-none bg-transparent resize-none border-none p-0"
                     />
-                    
+
                     <div className="pt-4 border-t border-slate-50">
                       <MediaDropZone
                         platformId={platformId}
@@ -478,8 +489,8 @@ export default function ComposePage() {
                         </span>
                       )}
                     </div>
-                    <Input 
-                      type="datetime-local" 
+                    <Input
+                      type="datetime-local"
                       min={minDateTime}
                       value={scheduleTimes[platformId] || ""}
                       onChange={e => setScheduleTimes(t => ({ ...t, [platformId]: e.target.value }))}
@@ -498,9 +509,9 @@ export default function ComposePage() {
 
             <div className="flex gap-3 pt-2">
               <Button variant="outline" onClick={() => setStep(2)} className="flex-1 h-12">Back</Button>
-              <Button 
-                onClick={handleSchedule} 
-                disabled={scheduling} 
+              <Button
+                onClick={handleSchedule}
+                disabled={scheduling}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-12 gap-2 shadow-md"
               >
                 {scheduling ? (

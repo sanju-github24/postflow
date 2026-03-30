@@ -77,9 +77,11 @@ router.get('/me', protect, async (req, res) => {
   }
 });
 
-// GET /auth/facebook — UPDATED: Removed 'protect' to allow browser redirect
+// ── Facebook ──────────────────────────────────────────────────────────────────
+
+// GET /auth/facebook
 router.get('/facebook', (req, res) => {
-  const { userId } = req.query; // Received from frontend via URL
+  const { userId } = req.query;
   if (!userId) return res.status(401).json({ error: 'Authentication required' });
 
   const scopes = 'pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish';
@@ -98,11 +100,11 @@ router.get('/facebook/callback', async (req, res) => {
     if (!code) return res.redirect(`${process.env.FRONTEND_URL}/accounts?error=facebook_denied`);
 
     const tokenRes = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
-      params: { 
-        client_id: process.env.FACEBOOK_APP_ID, 
-        client_secret: process.env.FACEBOOK_APP_SECRET, 
-        redirect_uri: process.env.FACEBOOK_CALLBACK_URL, 
-        code 
+      params: {
+        client_id: process.env.FACEBOOK_APP_ID,
+        client_secret: process.env.FACEBOOK_APP_SECRET,
+        redirect_uri: process.env.FACEBOOK_CALLBACK_URL,
+        code
       },
     });
     const { access_token } = tokenRes.data;
@@ -146,14 +148,15 @@ router.get('/facebook/callback', async (req, res) => {
   }
 });
 
-// GET /auth/twitter — UPDATED: Removed 'protect' to allow browser redirect
+// ── Twitter ───────────────────────────────────────────────────────────────────
+
+// GET /auth/twitter
 router.get('/twitter', (req, res) => {
-  const { userId } = req.query; // Received from frontend via URL
+  const { userId } = req.query;
   if (!userId) return res.status(401).json({ error: 'Authentication required' });
 
   const verifier = Math.random().toString(36).repeat(3).slice(2, 50);
-  
-  // Note: state now contains the userId so we know who to save the token for later
+
   res.redirect(
     `https://twitter.com/i/oauth2/authorize?response_type=code` +
     `&client_id=${process.env.TWITTER_CLIENT_ID}` +
@@ -173,30 +176,35 @@ router.get('/twitter/callback', async (req, res) => {
     const [userId, verifier] = decodeURIComponent(state).split('::');
     const tokenRes = await axios.post(
       'https://api.twitter.com/2/oauth2/token',
-      new URLSearchParams({ 
-        code, 
-        grant_type: 'authorization_code', 
-        redirect_uri: process.env.TWITTER_CALLBACK_URL, 
-        code_verifier: verifier 
+      new URLSearchParams({
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: process.env.TWITTER_CALLBACK_URL,
+        code_verifier: verifier
       }),
-      { 
-        auth: { 
-          username: process.env.TWITTER_CLIENT_ID, 
-          password: process.env.TWITTER_CLIENT_SECRET 
-        }, 
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' } 
+      {
+        auth: {
+          username: process.env.TWITTER_CLIENT_ID,
+          password: process.env.TWITTER_CLIENT_SECRET
+        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       }
     );
     const { access_token, refresh_token } = tokenRes.data;
 
-    const userRes = await axios.get('https://api.twitter.com/2/users/me', { headers: { Authorization: `Bearer ${access_token}` } });
+    const userRes = await axios.get('https://api.twitter.com/2/users/me', {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
     const twitterUser = userRes.data.data;
 
     const supabase = getDB();
     await supabase.from('connected_accounts').upsert({
       user_id: userId, platform: 'twitter',
-      access_token: encrypt(access_token), refresh_token: refresh_token ? encrypt(refresh_token) : null,
-      platform_user_id: twitterUser.id, username: twitterUser.username, connected_at: new Date().toISOString(),
+      access_token: encrypt(access_token),
+      refresh_token: refresh_token ? encrypt(refresh_token) : null,
+      platform_user_id: twitterUser.id,
+      username: twitterUser.username,
+      connected_at: new Date().toISOString(),
     }, { onConflict: 'user_id,platform' });
 
     res.redirect(`${process.env.FRONTEND_URL}/accounts?connected=twitter`);
@@ -205,6 +213,87 @@ router.get('/twitter/callback', async (req, res) => {
     res.redirect(`${process.env.FRONTEND_URL}/accounts?error=twitter_failed`);
   }
 });
+
+// ── LinkedIn ──────────────────────────────────────────────────────────────────
+
+// GET /auth/linkedin
+router.get('/linkedin', (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(401).json({ error: 'Authentication required' });
+
+  const scopes = 'openid profile email w_member_social';
+  res.redirect(
+    `https://www.linkedin.com/oauth/v2/authorization?response_type=code` +
+    `&client_id=${process.env.LINKEDIN_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(process.env.LINKEDIN_CALLBACK_URL)}` +
+    `&scope=${encodeURIComponent(scopes)}` +
+    `&state=${userId}`
+  );
+});
+
+// GET /auth/linkedin/callback
+// GET /auth/linkedin/callback
+router.get('/linkedin/callback', async (req, res) => {
+  try {
+    const { code, state: userId } = req.query;
+
+    console.log('🔵 LinkedIn callback fired');
+    console.log('🔵 code:', code ? 'EXISTS' : 'MISSING');
+    console.log('🔵 userId from state:', userId, '| type:', typeof userId);
+
+    if (!code) return res.redirect(`${process.env.FRONTEND_URL}/accounts?error=linkedin_denied`);
+
+    const tokenRes = await axios.post(
+      'https://www.linkedin.com/oauth/v2/accessToken',
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: process.env.LINKEDIN_CALLBACK_URL,
+        client_id: process.env.LINKEDIN_CLIENT_ID,
+        client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+    const { access_token } = tokenRes.data;
+    console.log('🔵 access_token:', access_token ? 'EXISTS' : 'MISSING');
+
+    const profileRes = await axios.get('https://api.linkedin.com/v2/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    const profile = profileRes.data;
+    console.log('🔵 profile:', JSON.stringify(profile));
+
+    const supabase = getDB();
+
+    // ── Direct INSERT first to isolate upsert issues ──
+    const { data, error } = await supabase
+      .from('connected_accounts')
+      .upsert({
+        user_id:          userId,
+        platform:         'linkedin',
+        access_token:     encrypt(access_token),
+        platform_user_id: profile.sub,
+        username:         profile.name || profile.email,
+        page_id:          profile.sub,
+        connected_at:     new Date().toISOString(),
+      }, { onConflict: 'user_id,platform' })
+      .select(); // ← .select() forces Supabase to return the row + any error
+
+    console.log('🔵 upsert data:', JSON.stringify(data));
+    console.log('🔵 upsert error:', error ? JSON.stringify(error) : 'NONE');
+
+    if (error) throw new Error(error.message);
+
+    res.redirect(`${process.env.FRONTEND_URL}/accounts?connected=linkedin`);
+  } catch (err) {
+    console.error('❌ LinkedIn OAuth error:', err.message);
+    if (err.response?.data) {
+      console.error('❌ LinkedIn error details:', JSON.stringify(err.response.data, null, 2));
+    }
+    res.redirect(`${process.env.FRONTEND_URL}/accounts?error=linkedin_failed`);
+  }
+});
+// ── Disconnect ────────────────────────────────────────────────────────────────
 
 // DELETE /auth/disconnect/:platform
 router.delete('/disconnect/:platform', protect, async (req, res) => {

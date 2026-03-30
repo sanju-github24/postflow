@@ -11,12 +11,13 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 
 interface PlatformConfig {
-  id: "facebook" | "instagram" | "twitter";
+  id: "facebook" | "instagram" | "twitter" | "linkedin";
   name: string;
   logo: string;
   desc: string;
   scope: string;
   note?: string;
+  connectVia?: string;
 }
 
 const PLATFORMS: PlatformConfig[] = [
@@ -34,6 +35,7 @@ const PLATFORMS: PlatformConfig[] = [
     desc: "Post to your Instagram Business account",
     scope: "instagram_basic, instagram_content_publish",
     note: "Linked automatically when you connect Facebook",
+    connectVia: "facebook",
   },
   {
     id: "twitter",
@@ -41,6 +43,13 @@ const PLATFORMS: PlatformConfig[] = [
     logo: "/twitter-logo.png",
     desc: "Post tweets to your X account",
     scope: "tweet.write, users.read",
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    logo: "/linkedIn-logo.png",
+    desc: "Post to your LinkedIn profile",
+    scope: "w_member_social, openid, profile, email",
   },
 ];
 
@@ -66,8 +75,8 @@ export default function AccountsPage() {
         list = res.data.connected_platforms;
       }
 
+      console.log("📋 Raw platform statuses:", list);
       setStatuses(list);
-      console.log("Verified Statuses:", list);
     } catch (error) {
       console.error("Failed to load platform statuses", error);
     } finally {
@@ -85,8 +94,9 @@ export default function AccountsPage() {
     }
 
     if (connected) {
-      setSuccessMessage(`${connected.toUpperCase()} connected successfully!`);
+      setSuccessMessage(`${connected.charAt(0).toUpperCase() + connected.slice(1)} connected successfully!`);
       setTimeout(() => setSuccessMessage(null), 4000);
+      // Load immediately + retry after 1.5s to ensure DB is updated
       load();
       setTimeout(() => load(false), 1500);
     } else {
@@ -101,12 +111,23 @@ export default function AccountsPage() {
     );
   };
 
-  const handleConnect = (platformId: string) => {
+  // ✅ FIX: A platform is connected if it exists in the list at all
+  // Some APIs return records without an explicit `connected` field
+  const isConnectedPlatform = (id: string): boolean => {
+    const status = getStatus(id);
+    if (!status) return false;
+    // If `connected` field exists, use it. Otherwise, presence in list = connected.
+    if (typeof status.connected === 'boolean') return status.connected;
+    // Fallback: if the record exists and has an access_token or platform_user_id, it's connected
+    return !!(status.access_token || status.platform_user_id || status.username);
+  };
+
+  const handleConnect = (platform: PlatformConfig) => {
     if (!user?.id) {
       alert("User session not found. Please log in again.");
       return;
     }
-    const targetPlatform = platformId === "instagram" ? "facebook" : platformId;
+    const targetPlatform = platform.connectVia || platform.id;
     window.location.href = `http://localhost:4000/api/auth/${targetPlatform}?userId=${user.id}`;
   };
 
@@ -151,17 +172,17 @@ export default function AccountsPage() {
         <div className="space-y-4">
           {PLATFORMS.map((p) => {
             const status = getStatus(p.id);
-            const isConnected = !!status?.connected;
+            const isConnected = isConnectedPlatform(p.id);
             const isDisconnecting = disconnecting === p.id;
+            const isDisabled = p.id === "instagram"; // auto-linked via Facebook
 
             return (
               <div
-                key={`${p.id}-${isConnected}`}
+                key={p.id}
                 className="bg-white border border-border rounded-xl p-5 transition-all hover:shadow-sm"
               >
                 <div className="flex items-center gap-4">
-
-                  {/* Fixed 48×48 logo container — white pill with subtle border */}
+                  {/* Logo */}
                   <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center shrink-0">
                     <img
                       src={p.logo}
@@ -200,7 +221,7 @@ export default function AccountsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDisconnect(p.id)}
-                        disabled={isDisconnecting || p.id === "instagram"}
+                        disabled={isDisconnecting || isDisabled}
                         className="gap-1.5 text-red-500 border-red-100 hover:bg-red-50 hover:border-red-200"
                       >
                         {isDisconnecting ? (
@@ -213,8 +234,8 @@ export default function AccountsPage() {
                     ) : (
                       <Button
                         size="sm"
-                        onClick={() => handleConnect(p.id)}
-                        disabled={p.id === "instagram"}
+                        onClick={() => handleConnect(p)}
+                        disabled={isDisabled}
                         className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-indigo-200"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -238,10 +259,7 @@ export default function AccountsPage() {
         </div>
 
         <p className="text-xs text-slate-400 mt-8 text-center leading-relaxed">
-          Using secure OAuth 2.0. Your tokens are encrypted. <br />
-          <code className="bg-slate-100 px-1 rounded text-[10px] font-mono">
-            http://localhost:4000/api/auth/twitter/callback
-          </code>
+          Using secure OAuth 2.0. Your tokens are encrypted.
         </p>
       </div>
     </Layout>

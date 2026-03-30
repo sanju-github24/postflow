@@ -8,12 +8,13 @@ import { PlusSquare, Clock, CheckCircle2, XCircle, Zap, Link2 } from "lucide-rea
 import { cn } from "@/lib/utils";
 
 const PLATFORM_LOGOS: Record<string, string> = {
-  facebook: "/facebook-logo.png",
+  facebook:  "/facebook-logo.png",
   instagram: "/instagram-logo.png",
-  twitter: "/twitter-logo.png",
+  twitter:   "/twitter-logo.png",
+  linkedin:  "/linkedIn-logo.png",
 };
 
-const ALL_PLATFORMS = ["facebook", "instagram", "twitter"];
+const ALL_PLATFORMS = ["facebook", "instagram", "twitter", "linkedin"];
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -35,7 +36,6 @@ export default function DashboardPage() {
           rawList = pRes.data.connected_platforms;
         }
 
-        // Always show all 3 platforms, merge API data over fixed list
         const merged = ALL_PLATFORMS.map((name) => {
           const found = rawList.find(
             (s) => String(s.platform).toLowerCase().trim() === name
@@ -61,8 +61,8 @@ export default function DashboardPage() {
   const connected = platforms.filter((p) => p.connected).length;
   const allSchedules = posts.flatMap((p: any) => p.post_schedules || []);
   const pending = allSchedules.filter((s: any) => s.status === "pending").length;
-  const posted = allSchedules.filter((s: any) => s.status === "posted").length;
-  const failed = allSchedules.filter((s: any) => s.status === "failed").length;
+  const posted  = allSchedules.filter((s: any) => s.status === "posted").length;
+  const failed  = allSchedules.filter((s: any) => s.status === "failed").length;
 
   return (
     <Layout>
@@ -72,11 +72,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="font-display text-2xl font-bold">
               Good{" "}
-              {new Date().getHours() < 12
-                ? "morning"
-                : new Date().getHours() < 17
-                ? "afternoon"
-                : "evening"}
+              {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}
               , {user?.name?.split(" ")[0]} 👋
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
@@ -93,10 +89,10 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Connected", value: connected, icon: Link2, color: "text-indigo-600", bg: "bg-indigo-50" },
-            { label: "Scheduled", value: pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-            { label: "Posted", value: posted, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-            { label: "Failed", value: failed, icon: XCircle, color: "text-red-500", bg: "bg-red-50" },
+            { label: "Connected", value: connected, icon: Link2,        color: "text-indigo-600", bg: "bg-indigo-50" },
+            { label: "Scheduled", value: pending,   icon: Clock,        color: "text-amber-600",  bg: "bg-amber-50"  },
+            { label: "Posted",    value: posted,    icon: CheckCircle2, color: "text-emerald-600",bg: "bg-emerald-50"},
+            { label: "Failed",    value: failed,    icon: XCircle,      color: "text-red-500",    bg: "bg-red-50"    },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <div key={label} className="bg-white border border-border rounded-xl p-5">
               <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center mb-3", bg)}>
@@ -113,9 +109,7 @@ export default function DashboardPage() {
           <div className="bg-white border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold text-base">Connected platforms</h2>
-              <Link to="/accounts" className="text-xs text-indigo-600 hover:underline">
-                Manage
-              </Link>
+              <Link to="/accounts" className="text-xs text-indigo-600 hover:underline">Manage</Link>
             </div>
             <div className="space-y-3">
               {loading
@@ -131,7 +125,6 @@ export default function DashboardPage() {
                   ))
                 : platforms.map((p) => (
                     <div key={p.platform} className="flex items-center gap-3">
-                      {/* Fixed 32×32 logo box — white with subtle border */}
                       <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center shrink-0">
                         <img
                           src={PLATFORM_LOGOS[p.platform]}
@@ -143,19 +136,13 @@ export default function DashboardPage() {
                       <div className="flex-1">
                         <p className="text-sm font-medium capitalize">{p.platform}</p>
                         <p className="text-xs text-muted-foreground">
-                          {p.connected
-                            ? `@${p.username || "Connected"}`
-                            : "Not connected"}
+                          {p.connected ? `@${p.username || "Connected"}` : "Not connected"}
                         </p>
                       </div>
-                      <span
-                        className={cn(
-                          "text-xs px-2 py-0.5 rounded-full font-medium",
-                          p.connected
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-gray-100 text-gray-400"
-                        )}
-                      >
+                      <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full font-medium",
+                        p.connected ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-400"
+                      )}>
                         {p.connected ? "Connected" : "—"}
                       </span>
                     </div>
@@ -167,9 +154,7 @@ export default function DashboardPage() {
           <div className="bg-white border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold text-base">Recent posts</h2>
-              <Link to="/scheduled" className="text-xs text-indigo-600 hover:underline">
-                View all
-              </Link>
+              <Link to="/scheduled" className="text-xs text-indigo-600 hover:underline">View all</Link>
             </div>
             <div className="space-y-3">
               {posts.slice(0, 4).map((post: any) => (
@@ -179,17 +164,15 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">{post.original_content}</p>
-                    <div className="flex gap-1 mt-1">
+                    <div className="flex gap-1 mt-1 flex-wrap">
                       {(post.post_schedules || []).map((s: any) => (
                         <span
                           key={s.id}
                           className={cn(
                             "text-xs px-1.5 py-0.5 rounded font-medium",
-                            s.status === "posted"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : s.status === "failed"
-                              ? "bg-red-100 text-red-600"
-                              : "bg-amber-100 text-amber-700"
+                            s.status === "posted"  ? "bg-emerald-100 text-emerald-700" :
+                            s.status === "failed"  ? "bg-red-100 text-red-600" :
+                            "bg-amber-100 text-amber-700"
                           )}
                         >
                           {s.platform}

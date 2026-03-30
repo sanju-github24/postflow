@@ -1,15 +1,13 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Initializing with your Google API Key
-const genAI = new GoogleGenerativeAI(process.env.ANTHROPIC_API_KEY); 
+const genAI = new GoogleGenerativeAI(process.env.ANTHROPIC_API_KEY);
 
-const transformPost = async (originalContent, platforms = ['facebook', 'instagram', 'twitter']) => {
-  // ✅ Using the Gemini 2.0 Flash-Lite identifier
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.5-flash-lite", 
-    generationConfig: { 
+const transformPost = async (originalContent, platforms = ['facebook', 'instagram', 'twitter', 'linkedin']) => {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash-lite",
+    generationConfig: {
       responseMimeType: "application/json",
-      temperature: 0.8 // Slightly higher for more creative social media variants
+      temperature: 0.8,
     }
   });
 
@@ -22,12 +20,14 @@ Rules:
 - facebook: Friendly and engaging. Up to 500 characters. 1-2 emojis.
 - instagram: Exciting and visual. Up to 400 characters. Add 5-8 hashtags at the end.
 - twitter: Short and punchy. MUST be under 280 characters. 1-2 emojis. No hashtags.
+- linkedin: Professional and insightful. Up to 1000 characters. Use a hook in the first line. Minimal hashtags (1-2 max). Focus on value, lessons, or industry insights. 1 emoji max.
 
 Required JSON Structure:
 {
   "facebook": "...",
   "instagram": "...",
-  "twitter": "..."
+  "twitter": "...",
+  "linkedin": "..."
 }`;
 
   try {
@@ -35,19 +35,17 @@ Required JSON Structure:
     const response = await result.response;
     const text = response.text();
 
-    // Parse the JSON directly
     const all = JSON.parse(text);
-    
-    // Filter results to only include requested platforms
+
+    // ✅ FIX: plain JS object, no TypeScript type annotation
     const filteredResult = {};
-    platforms.forEach(p => { 
-      if (all[p]) filteredResult[p] = all[p]; 
+    platforms.forEach(p => {
+      if (all[p]) filteredResult[p] = all[p];
     });
 
     return filteredResult;
   } catch (error) {
     console.error("AI Service Error:", error);
-    // Fallback if the specific lite model isn't available in your region yet
     throw new Error("AI transformation failed. Check your API key or model availability.");
   }
 };

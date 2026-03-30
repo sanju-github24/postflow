@@ -10,10 +10,7 @@ let running = false;
 const cleanupStorage = async (supabase, publicUrl) => {
   if (!publicUrl) return;
   try {
-    const path = publicUrl.split('/post-media/')[1]
-      // Handle signed URLs — strip query params
-      ?.split('?')[0];
-
+    const path = publicUrl.split('/post-media/')[1]?.split('?')[0];
     if (path) {
       const { error } = await supabase.storage.from('post-media').remove([path]);
       if (error) throw error;
@@ -25,22 +22,17 @@ const cleanupStorage = async (supabase, publicUrl) => {
 };
 
 /**
- * ✅ FIX: Generates a short-lived signed URL for private Supabase buckets.
- * All three platforms (Facebook, Instagram, Twitter) fetch media from the URL
- * you pass — so it MUST be publicly accessible at posting time.
- * If your bucket is public, this is a no-op and just returns the original URL.
+ * Generates a short-lived signed URL for private Supabase buckets.
  */
 const getAccessibleUrl = async (supabase, fileUrl) => {
   if (!fileUrl) return null;
-
   try {
-    // Extract the storage path from either a public or signed URL
     const pathMatch = fileUrl.split('/post-media/')[1]?.split('?')[0];
-    if (!pathMatch) return fileUrl; // Not a storage URL, return as-is
+    if (!pathMatch) return fileUrl;
 
     const { data, error } = await supabase.storage
       .from('post-media')
-      .createSignedUrl(pathMatch, 900); // 15 minutes — enough for API processing
+      .createSignedUrl(pathMatch, 900); // 15 minutes
 
     if (error) {
       console.warn('⚠️ Could not create signed URL, using original:', error.message);
@@ -63,7 +55,7 @@ const checkAndPublish = async () => {
     const supabase = getDB();
     const now = new Date().toISOString();
 
-    // 1. Fetch posts where scheduled_at <= now
+    // ✅ SELECT includes all 4 platforms including linkedin
     const { data: due, error: fetchError } = await supabase
       .from('post_schedules')
       .select(`
@@ -73,8 +65,14 @@ const checkAndPublish = async () => {
         scheduled_posts(
           id,
           user_id,
-          version_facebook, version_instagram, version_twitter,
-          media_facebook, media_instagram, media_twitter
+          version_facebook,
+          version_instagram,
+          version_twitter,
+          version_linkedin,
+          media_facebook,
+          media_instagram,
+          media_twitter,
+          media_linkedin
         )
       `)
       .eq('status', 'pending')
@@ -93,8 +91,8 @@ const checkAndPublish = async () => {
       const post = schedule.scheduled_posts;
       if (!post) continue;
 
-      // 2. Map content and media based on platform
-      const content = post[`version_${schedule.platform}`];
+      // ✅ Dynamically maps content + media for all 4 platforms
+      const content    = post[`version_${schedule.platform}`];
       const rawFileUrl = post[`media_${schedule.platform}`];
 
       if (!content) {
@@ -104,7 +102,7 @@ const checkAndPublish = async () => {
         continue;
       }
 
-      // 3. Fetch connected account
+      // Fetch connected account
       const { data: account, error: accError } = await supabase
         .from('connected_accounts')
         .select('access_token, refresh_token, page_id')
@@ -121,27 +119,20 @@ const checkAndPublish = async () => {
       }
 
       try {
-        // 4. ✅ FIX: Generate a signed URL so platforms can fetch the media
         const fileUrl = await getAccessibleUrl(supabase, rawFileUrl);
-
-        // 5. Send to Social Media API
         const platformPostId = await publish(schedule.platform, account, content, fileUrl);
 
-        // 6. Update status to 'posted'
         await supabase.from('post_schedules')
           .update({
-            status: 'posted',
-            posted_at: new Date().toISOString(),
-            post_id_on_platform: String(platformPostId),
+            status:               'posted',
+            posted_at:            new Date().toISOString(),
+            post_id_on_platform:  String(platformPostId),
           })
           .eq('id', schedule.id);
 
-        console.log(`✅ Successfully posted to ${schedule.platform} (ID: ${platformPostId})`);
+        console.log(`✅ Posted to ${schedule.platform} (ID: ${platformPostId})`);
 
-        // 7. Delete file from bucket to save space
-        if (rawFileUrl) {
-          await cleanupStorage(supabase, rawFileUrl);
-        }
+        if (rawFileUrl) await cleanupStorage(supabase, rawFileUrl);
 
       } catch (err) {
         const errorMsg = err.response?.data?.error?.message || err.message;
@@ -149,8 +140,6 @@ const checkAndPublish = async () => {
           .update({ status: 'failed', error: errorMsg })
           .eq('id', schedule.id);
         console.error(`❌ Failed to post to ${schedule.platform}:`, errorMsg);
-
-        // Log full API error response for easier debugging
         if (err.response?.data) {
           console.error('📋 API Error Details:', JSON.stringify(err.response.data, null, 2));
         }
@@ -163,9 +152,6 @@ const checkAndPublish = async () => {
   }
 };
 
-/**
- * Initializes the cron job to run every minute
- */
 const start = () => {
   cron.schedule('* * * * *', checkAndPublish);
   console.log('✅ Scheduler active: Monitoring post_schedules every minute.');
