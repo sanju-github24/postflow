@@ -20,13 +20,15 @@ function App() {
           <Route path="/"          element={<Navigate to="/login" replace />} />
           <Route path="/login"     element={<LoginPage />} />
           <Route path="/signup"    element={<SignupPage />} />
+          
+<Route path="/privacy" element={<PrivacyPage />} />
+<Route path="/terms" element={<TermsPage />} />
+<Route path="/data-deletion" element={<DataDeletionPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/compose"   element={<ProtectedRoute><ComposePage /></ProtectedRoute>} />
           <Route path="/scheduled" element={<ProtectedRoute><ScheduledPage /></ProtectedRoute>} />
           <Route path="/accounts"  element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
-          <Route path="/data-deletion" element={<ProtectedRoute><DataDeletionPage /></ProtectedRoute>} />
-          <Route path="/privacy"       element={<ProtectedRoute><PrivacyPage /></ProtectedRoute>} />
-          <Route path="/terms"         element={<ProtectedRoute><TermsPage /></ProtectedRoute>} />
+          
           <Route path="*"          element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
