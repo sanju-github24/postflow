@@ -17,25 +17,41 @@ getDB();
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://postflow-p1y3.vercel.app',
-    process.env.FRONTEND_URL,
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://postflow-fyxy-smoky.vercel.app',  // ✅ your Vercel URL
+      process.env.FRONTEND_URL,
+    ].filter(Boolean);
+
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
+    if (!origin) return callback(null, true);
+
+    if (allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('🚫 CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Handle preflight requests globally
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 // Routes
-app.use('/api/auth',       require('./src/routes/authRoutes'));
-app.use('/api/platforms',  require('./src/routes/platformRoutes'));
-app.use('/api/posts',      require('./src/routes/postRoutes'));
-app.use('/api/ai',         require('./src/routes/aiRoutes'));
+app.use('/api/auth',      require('./src/routes/authRoutes'));
+app.use('/api/platforms', require('./src/routes/platformRoutes'));
+app.use('/api/posts',     require('./src/routes/postRoutes'));
+app.use('/api/ai',        require('./src/routes/aiRoutes'));
 
 // Health check
 app.get('/health', (req, res) => {
