@@ -9,10 +9,11 @@ import {
   Trash2, Loader2, CalendarDays,
 } from "lucide-react";
 
-const PLATFORM_COLORS: Record<string, string> = {
-  facebook: "#1877F2",
-  instagram: "#E1306C",
-  twitter: "#1D9BF0",
+const PLATFORM_LOGOS: Record<string, string> = {
+  facebook:  "/facebook-logo.png",
+  instagram: "/instagram-logo.png",
+  twitter:   "/twitter-logo.png",
+  linkedin:  "/linkedin-logo.png",
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -70,16 +71,15 @@ export default function ScheduledPage() {
   });
 
   const counts = {
-    all: posts.length,
+    all:     posts.length,
     pending: posts.filter(p => (p.post_schedules || []).some((s: any) => s.status === "pending")).length,
-    posted: posts.filter(p => (p.post_schedules || []).some((s: any) => s.status === "posted")).length,
-    failed: posts.filter(p => (p.post_schedules || []).some((s: any) => s.status === "failed")).length,
+    posted:  posts.filter(p => (p.post_schedules || []).some((s: any) => s.status === "posted")).length,
+    failed:  posts.filter(p => (p.post_schedules || []).some((s: any) => s.status === "failed")).length,
   };
 
   return (
     <Layout>
       <div className="p-8 max-w-4xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="font-display text-2xl font-bold">Scheduled posts</h1>
@@ -92,26 +92,19 @@ export default function ScheduledPage() {
           </Link>
         </div>
 
-        {/* Success banner */}
         {successMsg && (
           <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2 text-emerald-700 text-sm">
             <CheckCircle2 className="w-4 h-4 shrink-0" /> {successMsg}
           </div>
         )}
 
-        {/* Filters */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {(["all", "pending", "posted", "failed"] as FilterType[]).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
+            <button key={f} onClick={() => setFilter(f)}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
-                filter === f
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "bg-white text-muted-foreground border-border hover:border-indigo-300"
-              )}
-            >
+                filter === f ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-muted-foreground border-border hover:border-indigo-300"
+              )}>
               {f.charAt(0).toUpperCase() + f.slice(1)}
               <span className={cn(
                 "ml-1.5 text-xs px-1.5 py-0.5 rounded-full",
@@ -123,7 +116,6 @@ export default function ScheduledPage() {
           ))}
         </div>
 
-        {/* Posts list */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -149,16 +141,12 @@ export default function ScheduledPage() {
               const hasPending = (post.post_schedules || []).some((s: any) => s.status === "pending");
               return (
                 <div key={post.id} className="bg-white border border-border rounded-xl overflow-hidden">
-                  {/* Post content */}
                   <div className="p-5 border-b border-border">
                     <div className="flex items-start justify-between gap-4">
                       <p className="text-sm leading-relaxed flex-1">{post.original_content}</p>
                       {hasPending && (
-                        <button
-                          onClick={() => handleDelete(post.id)}
-                          disabled={deleting === post.id}
-                          className="text-muted-foreground hover:text-red-500 transition-colors shrink-0"
-                        >
+                        <button onClick={() => handleDelete(post.id)} disabled={deleting === post.id}
+                          className="text-muted-foreground hover:text-red-500 transition-colors shrink-0">
                           {deleting === post.id
                             ? <Loader2 className="w-4 h-4 animate-spin" />
                             : <Trash2 className="w-4 h-4" />}
@@ -170,15 +158,17 @@ export default function ScheduledPage() {
                     </p>
                   </div>
 
-                  {/* Platform schedules */}
                   <div className="divide-y divide-border">
                     {(post.post_schedules || []).map((s: any) => (
                       <div key={s.id} className="flex items-center gap-3 px-5 py-3">
-                        <div
-                          className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold shrink-0"
-                          style={{ background: PLATFORM_COLORS[s.platform] || "#888" }}
-                        >
-                          {s.platform[0].toUpperCase()}
+                        {/* ✅ PNG logo instead of colored letter box */}
+                        <div className="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center shrink-0">
+                          <img
+                            src={PLATFORM_LOGOS[s.platform] || "/favicon.ico"}
+                            alt={s.platform}
+                            style={{ width: 14, height: 14 }}
+                            className="object-contain"
+                          />
                         </div>
                         <span className="text-sm capitalize font-medium w-20">{s.platform}</span>
                         <span className="text-xs text-muted-foreground flex-1">

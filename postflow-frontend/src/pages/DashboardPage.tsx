@@ -11,7 +11,7 @@ const PLATFORM_LOGOS: Record<string, string> = {
   facebook:  "/facebook-logo.png",
   instagram: "/instagram-logo.png",
   twitter:   "/twitter-logo.png",
-  linkedin:  "/linkedIn-logo.png",
+  linkedin:  "/linkedin-logo.png",
 };
 
 const ALL_PLATFORMS = ["facebook", "instagram", "twitter", "linkedin"];
@@ -28,18 +28,12 @@ export default function DashboardPage() {
         const [pRes, postsRes] = await Promise.all([getPlatformStatus(), getPosts()]);
 
         let rawList: any[] = [];
-        if (Array.isArray(pRes.data)) {
-          rawList = pRes.data;
-        } else if (pRes.data?.data) {
-          rawList = pRes.data.data;
-        } else if (pRes.data?.connected_platforms) {
-          rawList = pRes.data.connected_platforms;
-        }
+        if (Array.isArray(pRes.data)) rawList = pRes.data;
+        else if (pRes.data?.data) rawList = pRes.data.data;
+        else if (pRes.data?.connected_platforms) rawList = pRes.data.connected_platforms;
 
         const merged = ALL_PLATFORMS.map((name) => {
-          const found = rawList.find(
-            (s) => String(s.platform).toLowerCase().trim() === name
-          );
+          const found = rawList.find((s) => String(s.platform).toLowerCase().trim() === name);
           return {
             platform: name,
             connected: !!found?.connected,
@@ -67,7 +61,6 @@ export default function DashboardPage() {
   return (
     <Layout>
       <div className="p-8 max-w-5xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display text-2xl font-bold">
@@ -75,9 +68,7 @@ export default function DashboardPage() {
               {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}
               , {user?.name?.split(" ")[0]} 👋
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Here's what's happening with your posts
-            </p>
+            <p className="text-muted-foreground text-sm mt-1">Here's what's happening with your posts</p>
           </div>
           <Link to="/compose">
             <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
@@ -86,7 +77,6 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: "Connected", value: connected, icon: Link2,        color: "text-indigo-600", bg: "bg-indigo-50" },
@@ -105,7 +95,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Platform status */}
           <div className="bg-white border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold text-base">Connected platforms</h2>
@@ -150,7 +139,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Recent posts */}
           <div className="bg-white border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-semibold text-base">Recent posts</h2>
@@ -166,15 +154,12 @@ export default function DashboardPage() {
                     <p className="text-sm truncate">{post.original_content}</p>
                     <div className="flex gap-1 mt-1 flex-wrap">
                       {(post.post_schedules || []).map((s: any) => (
-                        <span
-                          key={s.id}
-                          className={cn(
-                            "text-xs px-1.5 py-0.5 rounded font-medium",
-                            s.status === "posted"  ? "bg-emerald-100 text-emerald-700" :
-                            s.status === "failed"  ? "bg-red-100 text-red-600" :
-                            "bg-amber-100 text-amber-700"
-                          )}
-                        >
+                        <span key={s.id} className={cn(
+                          "text-xs px-1.5 py-0.5 rounded font-medium",
+                          s.status === "posted"  ? "bg-emerald-100 text-emerald-700" :
+                          s.status === "failed"  ? "bg-red-100 text-red-600" :
+                          "bg-amber-100 text-amber-700"
+                        )}>
                           {s.platform}
                         </span>
                       ))}

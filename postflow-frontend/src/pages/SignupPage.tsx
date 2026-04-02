@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 
 const PLATFORMS = [
-  { id: "facebook", label: "Facebook", color: "#1877F2" },
-  { id: "instagram", label: "Instagram", color: "#E1306C" },
-  { id: "twitter", label: "Twitter / X", color: "#1D9BF0" },
+  { id: "facebook",  label: "Facebook",    logo: "/facebook-logo.png" },
+  { id: "instagram", label: "Instagram",   logo: "/instagram-logo.png" },
+  { id: "twitter",   label: "Twitter / X", logo: "/twitter-logo.png" },
+  { id: "linkedin",  label: "LinkedIn",    logo: "/linkedin-logo.png" },
 ];
 
 const BG_DOTS = Array.from({ length: 18 }, (_, i) => i);
@@ -63,12 +64,9 @@ export default function SignupPage() {
     <div className="min-h-screen flex font-body">
       {/* ── LEFT PANEL ── */}
       <div className="hidden lg:flex w-[45%] bg-[#0b0e1a] flex-col justify-between p-12 relative overflow-hidden">
-        {/* Animated dots */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {BG_DOTS.map((i) => (
-            <div
-              key={i}
-              className="absolute rounded-full opacity-20 animate-float"
+            <div key={i} className="absolute rounded-full opacity-20 animate-float"
               style={{
                 width: `${6 + (i % 4) * 6}px`,
                 height: `${6 + (i % 4) * 6}px`,
@@ -82,7 +80,6 @@ export default function SignupPage() {
           ))}
         </div>
 
-        {/* Logo */}
         <div className="flex items-center gap-3 relative z-10">
           <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center">
             <Zap className="w-5 h-5 text-white" />
@@ -90,17 +87,14 @@ export default function SignupPage() {
           <span className="font-display text-white text-xl font-semibold tracking-tight">PostFlow</span>
         </div>
 
-        {/* Hero text */}
         <div className="relative z-10 space-y-6">
           <h1 className="font-display text-5xl font-bold text-white leading-tight">
             One post.<br />
             <span className="text-gradient">Every platform.</span>
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed max-w-sm">
-            Write once, let AI transform your content for Instagram, Twitter, and Facebook automatically.
+            Write once, let AI transform your content for Instagram, Twitter, Facebook and LinkedIn automatically.
           </p>
-
-          {/* Feature pills */}
           <div className="flex flex-col gap-3 pt-2">
             {[
               "AI adapts tone per platform",
@@ -115,6 +109,16 @@ export default function SignupPage() {
               </div>
             ))}
           </div>
+
+          {/* ✅ Platform logos row */}
+          <div className="flex items-center gap-3 pt-2">
+            {PLATFORMS.map((p) => (
+              <div key={p.id}
+                className="w-9 h-9 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center">
+                <img src={p.logo} alt={p.label} style={{ width: 20, height: 20 }} className="object-contain" />
+              </div>
+            ))}
+          </div>
         </div>
 
         <p className="text-slate-600 text-xs relative z-10">© 2026 PostFlow AI</p>
@@ -124,7 +128,6 @@ export default function SignupPage() {
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-md animate-fade-up">
 
-          {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
             <div className="w-8 h-8 rounded-xl bg-indigo-500 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
@@ -132,7 +135,6 @@ export default function SignupPage() {
             <span className="font-display text-lg font-semibold">PostFlow</span>
           </div>
 
-          {/* Step indicator */}
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               {steps.map((s, i) => (
@@ -140,11 +142,9 @@ export default function SignupPage() {
                   <div className="flex items-center gap-2">
                     <div className={cn(
                       "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
-                      step > i + 1
-                        ? "bg-indigo-500 text-white"
-                        : step === i + 1
-                        ? "bg-indigo-500 text-white ring-4 ring-indigo-500/20"
-                        : "bg-muted text-muted-foreground"
+                      step > i + 1 ? "bg-indigo-500 text-white" :
+                      step === i + 1 ? "bg-indigo-500 text-white ring-4 ring-indigo-500/20" :
+                      "bg-muted text-muted-foreground"
                     )}>
                       {step > i + 1 ? <Check className="w-3.5 h-3.5" /> : i + 1}
                     </div>
@@ -164,7 +164,6 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* Card */}
           <div className="bg-white border border-border rounded-2xl shadow-sm p-8">
             {/* Step 1 */}
             {step === 1 && (
@@ -207,21 +206,15 @@ export default function SignupPage() {
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPw ? "text" : "password"}
-                      placeholder="Min. 6 characters"
-                      value={password}
+                    <Input id="password" type={showPw ? "text" : "password"}
+                      placeholder="Min. 6 characters" value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9 pr-10"
-                      onKeyDown={(e) => e.key === "Enter" && next()}
-                    />
+                      className="pl-9 pr-10" onKeyDown={(e) => e.key === "Enter" && next()} />
                     <button type="button" onClick={() => setShowPw(!showPw)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                       {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {/* Strength bar */}
                   <div className="flex gap-1 mt-2">
                     {[1, 2, 3, 4].map((lvl) => (
                       <div key={lvl} className={cn(
@@ -251,47 +244,37 @@ export default function SignupPage() {
                 </div>
                 <div className="space-y-2">
                   {PLATFORMS.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => togglePlatform(p.id)}
+                    <button key={p.id} type="button" onClick={() => togglePlatform(p.id)}
                       className={cn(
                         "w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all duration-200",
                         selectedPlatforms.includes(p.id)
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                           : "border-border bg-background hover:border-indigo-300 hover:bg-indigo-50/50"
-                      )}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ background: p.color + "20" }}>
-                        <div className="w-3 h-3 rounded-full" style={{ background: p.color }} />
+                      )}>
+                      {/* ✅ PNG logo */}
+                      <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center shrink-0">
+                        <img src={p.logo} alt={p.label} style={{ width: 18, height: 18 }} className="object-contain" />
                       </div>
                       <span className="text-sm font-medium flex-1">{p.label}</span>
                       <div className={cn(
                         "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-                        selectedPlatforms.includes(p.id)
-                          ? "border-indigo-500 bg-indigo-500"
-                          : "border-border"
+                        selectedPlatforms.includes(p.id) ? "border-indigo-500 bg-indigo-500" : "border-border"
                       )}>
                         {selectedPlatforms.includes(p.id) && <Check className="w-3 h-3 text-white" />}
                       </div>
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  You can always add or remove platforms later.
-                </p>
+                <p className="text-xs text-muted-foreground">You can always add or remove platforms later.</p>
               </div>
             )}
 
-            {/* Error */}
             {(localError || error) && (
               <p className="mt-4 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
                 {localError || error}
               </p>
             )}
 
-            {/* Actions */}
             <div className={cn("mt-6 flex gap-3", step > 1 ? "justify-between" : "justify-end")}>
               {step > 1 && (
                 <Button variant="outline" onClick={back} className="gap-2">
@@ -305,7 +288,9 @@ export default function SignupPage() {
               ) : (
                 <Button onClick={handleSubmit} disabled={loading}
                   className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
-                  {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</> : <>Create account <Check className="w-4 h-4" /></>}
+                  {loading
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</>
+                    : <>Create account <Check className="w-4 h-4" /></>}
                 </Button>
               )}
             </div>
