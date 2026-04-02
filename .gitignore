@@ -1,8 +1,18 @@
+# Dependencies
 node_modules/
+
+# Environment files
 .env
-.DS_Store
+.env.local
+.env.development
+.env.production
+
+# Build output
 dist/
 build/
-.env
-.env
-.env.localpostflow-backend/.env
+
+# OS files
+.DS_Store
+
+# Backend specific
+postflow-backend/.env
