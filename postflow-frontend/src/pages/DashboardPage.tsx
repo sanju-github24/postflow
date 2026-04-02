@@ -11,7 +11,7 @@ const PLATFORM_LOGOS: Record<string, string> = {
   facebook:  "/facebook-logo.png",
   instagram: "/instagram-logo.png",
   twitter:   "/twitter-logo.png",
-  linkedin:  "/linkedin-logo.png",
+  linkedin:  "/linkedIn-logo.png",
 };
 
 const ALL_PLATFORMS = ["facebook", "instagram", "twitter", "linkedin"];

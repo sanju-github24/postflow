@@ -14,7 +14,7 @@ const PLATFORMS = [
   { id: "facebook",  label: "Facebook",    logo: "/facebook-logo.png" },
   { id: "instagram", label: "Instagram",   logo: "/instagram-logo.png" },
   { id: "twitter",   label: "Twitter / X", logo: "/twitter-logo.png" },
-  { id: "linkedin",  label: "LinkedIn",    logo: "/linkedin-logo.png" },
+  { id: "linkedin",  label: "LinkedIn",    logo: "/linkedIn-logo.png" },
 ];
 
 const BG_DOTS = Array.from({ length: 18 }, (_, i) => i);

@@ -42,7 +42,7 @@ const PLATFORMS: PlatformConfig[] = [
   {
     id: "linkedin",
     name: "LinkedIn",
-    logo: "/linkedin-logo.png",
+    logo: "linkedIn-logo.png",
     desc: "Post to your LinkedIn profile",
     scope: "w_member_social, openid, profile, email",
   },
